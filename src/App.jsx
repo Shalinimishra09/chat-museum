@@ -1,22 +1,36 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 
 const MuseumChatbot = () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [step, setStep] = useState(0);
-  const [ticketCount, setTicketCount] = useState(0);
+  const [ticketCount, setTicketCount] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [paid, setPaid] = useState(false);
   const [messages, setMessages] = useState([
-    { from: "bot", text: "Hello! Welcome to  National Museum. What's your name?" },
+    { from: "bot", text: "Hello! Welcome to National Museum. What's your name?" },
   ]);
+  const [isTyping, setIsTyping] = useState(false);
+  const messagesEndRef = useRef(null);
 
   const totalAmount = ticketCount * 200;
 
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
   const addMessage = (from, text) => {
-    setMessages((prev) => [...prev, { from, text }]);
+    if (from === "bot") {
+      setIsTyping(true);
+      setTimeout(() => {
+        setMessages((prev) => [...prev, { from, text }]);
+        setIsTyping(false);
+      }, 800);
+    } else {
+      setMessages((prev) => [...prev, { from, text }]);
+    }
   };
 
   const handleLogin = () => {
@@ -30,7 +44,7 @@ const MuseumChatbot = () => {
   };
 
   const handleDownload = () => {
-    const content = ` National Museum Ticket\n\nName: ${username}\nTickets: ${ticketCount}\nDate: ${preferredDate}\nTime: ${preferredTime}\nTotal Paid: ₹${totalAmount}`;
+    const content = `National Museum Ticket\n\nName: ${username}\nTickets: ${ticketCount}\nDate: ${preferredDate}\nTime: ${preferredTime}\nTotal Paid: ₹${totalAmount}`;
     const blob = new Blob([content], { type: "text/plain" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -58,75 +72,87 @@ const MuseumChatbot = () => {
   };
 
   return (
-    <div className="min-h-screen bg-yellow-50">
-      <header className="bg-yellow-100 p-4 text-center shadow-md">
-        <h1 className="text-3xl font-bold text-yellow-800"> National Museum</h1>
-        <p className="text-sm text-yellow-700">Explore history</p>
+    <div className="min-h-screen bg-gradient-to-b from-yellow-50 to-yellow-100 flex flex-col items-center font-sans text-yellow-900">
+      <header className="bg-yellow-300 shadow-md w-full py-5 text-center rounded-b-3xl mb-6">
+        <h1 className="text-4xl font-extrabold tracking-wide drop-shadow-md">National Museum</h1>
+        <p className="text-lg mt-1 font-medium">Explore history with us</p>
       </header>
 
-      <div className="flex items-center justify-center p-4">
+      <div className="bg-white shadow-xl rounded-3xl w-full max-w-2xl p-8 flex flex-col">
         {!loggedIn ? (
-          <div className="bg-white p-6 rounded-xl shadow-md w-full max-w-sm mt-8">
-            <h2 className="text-xl font-semibold text-center text-yellow-700 mb-4">Login to MuseumBot</h2>
+          <div className="space-y-6">
+            <h2 className="text-2xl font-semibold text-center text-yellow-800 mb-4">Login to MuseumBot</h2>
             <input
               type="text"
               placeholder="Username"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md mb-3 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              autoFocus
+              className="w-full px-5 py-3 rounded-xl border border-yellow-300 focus:ring-4 focus:ring-yellow-400 focus:outline-none transition"
             />
             <input
               type="password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 border rounded-md mb-4 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+              className="w-full px-5 py-3 rounded-xl border border-yellow-300 focus:ring-4 focus:ring-yellow-400 focus:outline-none transition"
             />
             <button
               onClick={handleLogin}
-              className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md"
+              disabled={!username.trim() || !password.trim()}
+              className={`w-full py-3 rounded-xl font-semibold text-white transition ${
+                username.trim() && password.trim() ? "bg-yellow-600 hover:bg-yellow-700" : "bg-yellow-300 cursor-not-allowed"
+              }`}
             >
               Login
             </button>
           </div>
         ) : (
-          <div className="w-full max-w-xl mt-6">
-            <h2 className="text-2xl font-bold text-yellow-800 mb-4 text-center">🎫 Museum Chatbot</h2>
-            <div className="bg-white p-4 rounded-lg shadow h-96 overflow-y-auto">
-              {messages.map((msg, index) => (
+          <>
+            <h2 className="text-3xl font-bold text-yellow-900 mb-6 text-center select-none">🎫 Museum Chatbot</h2>
+
+            <div className="flex-1 bg-yellow-50 rounded-2xl p-6 shadow-inner overflow-y-auto max-h-[420px] mb-6 space-y-3 flex flex-col">
+              {messages.map((msg, i) => (
                 <div
-                  key={index}
-                  className={`mb-2 flex ${msg.from === "user" ? "justify-end" : "justify-start"}`}
+                  key={i}
+                  className={`max-w-[75%] px-5 py-3 rounded-2xl text-sm whitespace-pre-wrap ${
+                    msg.from === "user"
+                      ? "bg-yellow-400 text-yellow-900 self-end rounded-br-none shadow-md"
+                      : "bg-white text-yellow-900 self-start rounded-bl-none shadow-md"
+                  }`}
+                  style={{ alignSelf: msg.from === "user" ? "flex-end" : "flex-start" }}
                 >
-                  <div
-                    className={`px-3 py-2 rounded-md text-sm max-w-xs whitespace-pre-wrap ${
-                      msg.from === "user"
-                        ? "bg-yellow-200 text-yellow-900"
-                        : "bg-gray-200 text-gray-800"
-                    }`}
-                  >
-                    {msg.text}
-                  </div>
+                  {msg.text}
                 </div>
               ))}
+              {isTyping && (
+                <div className="bg-white text-yellow-700 px-4 py-2 rounded-2xl w-28 animate-pulse shadow-md self-start">MuseumBot is typing...</div>
+              )}
+              <div ref={messagesEndRef} />
             </div>
 
             {step === 1 && (
-              <div className="mt-4">
+              <div className="flex gap-4">
                 <input
                   type="number"
                   min="1"
                   value={ticketCount}
-                  onChange={(e) => setTicketCount(Number(e.target.value))}
-                  className="w-full px-4 py-2 border rounded-md mb-2"
-                  placeholder="Enter number of tickets"
+                  onChange={(e) => setTicketCount(e.target.value.replace(/\D/, ""))}
+                  placeholder="Number of tickets"
+                  autoFocus
+                  className="flex-grow px-5 py-3 rounded-xl border border-yellow-300 focus:ring-4 focus:ring-yellow-400 focus:outline-none transition"
                 />
                 <button
+                  disabled={!ticketCount || Number(ticketCount) < 1}
                   onClick={() => {
-                    addMessage("user", `${ticketCount} tickets`);
+                    addMessage("user", `${ticketCount} ticket(s)`);
                     handleNext();
                   }}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md"
+                  className={`px-6 py-3 rounded-xl font-semibold text-white transition ${
+                    ticketCount && Number(ticketCount) >= 1
+                      ? "bg-yellow-600 hover:bg-yellow-700"
+                      : "bg-yellow-300 cursor-not-allowed"
+                  }`}
                 >
                   Next
                 </button>
@@ -134,19 +160,23 @@ const MuseumChatbot = () => {
             )}
 
             {step === 2 && (
-              <div className="mt-4">
+              <div className="flex gap-4">
                 <input
                   type="date"
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-md mb-2"
+                  className="flex-grow px-5 py-3 rounded-xl border border-yellow-300 focus:ring-4 focus:ring-yellow-400 focus:outline-none transition"
+                  autoFocus
                 />
                 <button
+                  disabled={!preferredDate}
                   onClick={() => {
                     addMessage("user", `Date: ${preferredDate}`);
                     handleNext();
                   }}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md"
+                  className={`px-6 py-3 rounded-xl font-semibold text-white transition ${
+                    preferredDate ? "bg-yellow-600 hover:bg-yellow-700" : "bg-yellow-300 cursor-not-allowed"
+                  }`}
                 >
                   Next
                 </button>
@@ -154,13 +184,16 @@ const MuseumChatbot = () => {
             )}
 
             {step === 3 && (
-              <div className="mt-4">
+              <div className="flex gap-4">
                 <select
                   value={preferredTime}
                   onChange={(e) => setPreferredTime(e.target.value)}
-                  className="w-full px-4 py-2 border rounded-md mb-2"
+                  className="flex-grow px-5 py-3 rounded-xl border border-yellow-300 focus:ring-4 focus:ring-yellow-400 focus:outline-none transition"
+                  autoFocus
                 >
-                  <option value="">Select Time</option>
+                  <option value="" disabled>
+                    Select Time
+                  </option>
                   <option value="9:00 AM">9:00 AM</option>
                   <option value="11:00 AM">11:00 AM</option>
                   <option value="1:00 PM">1:00 PM</option>
@@ -168,11 +201,14 @@ const MuseumChatbot = () => {
                   <option value="5:00 PM">5:00 PM</option>
                 </select>
                 <button
+                  disabled={!preferredTime}
                   onClick={() => {
                     addMessage("user", `Time: ${preferredTime}`);
                     handleNext();
                   }}
-                  className="w-full bg-yellow-500 hover:bg-yellow-600 text-white py-2 rounded-md"
+                  className={`px-6 py-3 rounded-xl font-semibold text-white transition ${
+                    preferredTime ? "bg-yellow-600 hover:bg-yellow-700" : "bg-yellow-300 cursor-not-allowed"
+                  }`}
                 >
                   Confirm
                 </button>
@@ -180,13 +216,13 @@ const MuseumChatbot = () => {
             )}
 
             {step === 4 && (
-              <div className="mt-4">
+              <div className="flex justify-center">
                 <button
                   onClick={() => {
                     addMessage("user", `Pay ₹${totalAmount}`);
                     handleNext();
                   }}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white py-2 rounded-md"
+                  className="px-10 py-3 rounded-3xl font-bold text-white bg-gradient-to-r from-yellow-500 to-yellow-700 hover:from-yellow-600 hover:to-yellow-800 shadow-lg transition"
                 >
                   Pay ₹{totalAmount}
                 </button>
@@ -194,26 +230,27 @@ const MuseumChatbot = () => {
             )}
 
             {step === 5 && paid && (
-              <div className="mt-4 text-center">
+              <div className="flex flex-col items-center space-y-6">
+                <p className="text-lg font-semibold text-yellow-800">
+                  🎉 Thank you, {username}! Your booking is confirmed.
+                </p>
                 <button
                   onClick={handleDownload}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-md"
+                  className="px-8 py-3 rounded-xl font-semibold text-white bg-yellow-600 hover:bg-yellow-700 shadow-md transition"
                 >
                   Download Ticket
                 </button>
               </div>
             )}
-          </div>
+          </>
         )}
       </div>
 
-      <footer className="text-center text-yellow-700 text-sm mt-10 pb-4">
-        &copy; 2025  National Museum. All rights reserved.
+      <footer className="text-center text-yellow-700 text-sm mt-10 pb-6 select-none">
+        &copy; 2025 National Museum. All rights reserved.
       </footer>
     </div>
   );
 };
 
 export default MuseumChatbot;
-
-
