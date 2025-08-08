@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 
-const MuseumChatbot = () => {
+const App= () => {
   const [loggedIn, setLoggedIn] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -253,4 +253,4 @@ const MuseumChatbot = () => {
   );
 };
 
-export default MuseumChatbot;
+export default App;
